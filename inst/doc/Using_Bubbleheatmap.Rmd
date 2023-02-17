@@ -1,0 +1,198 @@
+---
+title: "Using bubbleHeatmap to Plot Nightingale Metabolomics Data"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{"Using bubbleHeatmap to Plot Nightingale Metabolomics Data"}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(bubbleHeatmap)
+```
+
+# Abstract
+
+We present bubbleHeatmap, an R plotting package based on the grid system, which 
+combines elements of a bubble plot and heatmap to conveniently display two 
+numerical variables, (represented by color and size) grouped by categorical 
+variables on the x and y axes. This is a useful alternative to a forest plot 
+when the data can be grouped in two dimensions, such as predictors x outcomes.
+We also demonstrate the particular advantage of this plot type over a 
+traditional forest plot for visualising the 225 metabolic measures produced by 
+the automated, high-throughput NMR-based platform developed by Nightingale 
+Health. Nightingale metabolomic profiles are already available for several large 
+biobanks and global cohorts (including recently released data on 100K 
+individuals in UK Biobank) and have been used in over 300 peer-reviewed 
+publications. We therefore expect the figure template included in this package 
+to be of ongoing general interest. 
+
+# The bubbleHeatmap Plotting Function
+
+The bubbleHeatmap function provided in this package returns a graphical object 
+(grob) representing a plot consisting of a rectangular grid with squares 
+containing colored “bubbles”. The color and size of the bubbles can be scaled 
+according to the values of different variables which are input to the function 
+as two numeric matrices with identical dimensions. The row and column names of 
+the matrices can be added to the plot to label the grid. There are also various 
+options to add plot and axis titles, legends, label a row or column of plots in 
+a multi-plot figure, and to change the color scale and grid/bubble sizes. 
+Legends can be built into the plot or drawn separately using bubbleHMLegends(). 
+Additional edits to individual elements (including graphical parameters) can 
+easily be made before the plot is drawn. 
+
+All plots are drawn in a viewport with a 5 x 5 layout grid and a given object is 
+always positioned in the same cell. This allows multiple plots to be easily 
+aligned for combining in a single figure. The positions of the elements in the 
+layout grid (column, row) are: PlotTitle (3, 1), XTitle(3, 2), 
+LeftLabelsTitle(2, 3), TopLabels(3:4, 3), YTitle(1, 4), LeftLabels(2, 4), 
+PlotGrid(3, 4), RowBracket/RowTitle(4, 4), Legends (5, 4), 
+ColBracket/ColTitle(3, 5).
+
+```{r bubbleHeatmap}
+#Simulate data
+names <- list(paste0("leftLabels", 1:6), paste0("topLabels", 1:10))
+colorMat <- matrix(rnorm(60), nrow=6, ncol=10, dimnames = names)
+sizeMat <- matrix(abs(rnorm(60)), nrow=6, ncol=10, dimnames = names)
+
+#Create sample plot tree containing all elements
+tree <-  bubbleHeatmap(colorMat, sizeMat, treeName = "example",
+             leftLabelsTitle = "leftLabelsTitle", showRowBracket = T,
+             rowTitle = "rowTitle", showColBracket = T, colTitle="colTitle",
+             plotTitle="plotTitle", xTitle="xTitle", yTitle="yTitle",
+             legendTitles = c("legendTitles[1]", "legendTitles[2]"))
+```
+```{r draw-plot1, dev = "png", dev.args = list(type = "cairo-png"), fig.width = 6.5, fig.height=3.5, out.width="100%"}
+#Draw plot
+grid.newpage()
+grid.draw(tree)
+showViewport()
+```
+
+
+# The Nightingale Plot Templates
+## Nightingale Metabolomics Platform
+Nightingale Health is a Finnish company which has developed a fully automated 
+platform for deriving over 200 quantitative metabolomics measures from a single 
+blood serum sample using NMR technology, at a comparable cost to standard lipid 
+clinical chemistry. These measures include concentration and composition of 14 
+lipoprotein subclasses, apolipoproteins, fatty acids, amino acids and glycolysis 
+related metabolites. Over 1M samples have already been processed, including 
+biobank participants, population cohorts and clinical studies, with capacity to 
+process an additional 250K samples per year. Over 100K profiles of UK Biobank 
+participants have recently been released, with data on the remaining individuals 
+to follow. The wide availability of standardised Nightingale datasets in global 
+cohorts facilitates collaborative research and is contributing to the 
+identification of new biomarkers across a range of diseases. 
+
+## CETP Dataset
+The data included in this package represents associations between Nightingale 
+metabolic measures and a genetic risk score (GRS) for Cholesterol Ester Transfer 
+Protein (CETP) in the China Kadoorie Biobank (CKB), a prospective study of 
+Chinese adults from 10 distinct areas of China. The full design of the CKB 
+cohort and the methods and results of this study have been previously published. 
+
+CETP transfers esterified cholesterol from HDL to apolipoprotein B-containing 
+lipoproteins in exchange for triglycerides. This process is a key component of 
+the atheroprotective reverse cholesterol transport pathway, which modulates the 
+return of excess cholesterol from peripheral cells such as macrophages to the 
+liver, where it can be redistributed or excreted. Reduced CETP activity results 
+in higher levels of HDL cholesterol (HDL-C), which has resulted in interest in 
+CETP as a drug target due to the inverse correlation between HDL-C and risk of 
+atherosclerotic disease. In this analysis, five CETP SNP variants were selected 
+on the basis of previously reported associations with HDL cholesterol and CETP 
+activity. Genotyping data for these variants and conventional lipid biochemistry 
+measures were available for a subset of 17,854 CKB participants selected for a 
+CVD case-control study. This data was used to generate a CETP GRS weighted by 
+HDL-C association, derived internally with 100-fold cross-validation. The 
+Nightingale Health metabolomics panel consisting of 225 metabolomics measures 
+was available for 4657 of these individuals, and association with the GRS was 
+assessed by linear regression with adjustment for age and sex, stratified by
+geographical region. In generation of the GRS and association of metabolomics,
+outcomes were standardized by rank inverse normal transformation, stratified by 
+region, after adjustment for age and sex. 
+
+The sample dataset provided includes the estimate, standard error, p-value, and
+-log10(p-value) for the association of the 225 metabolomics traits with the CETP
+GRS, scaled to 10-mg/dL higher levels of HDL-C.
+
+## Workflow
+### Load Data
+The ntngale225 and ntngale249 data frames contain the necessary 
+plot groupings and row/column names to arrange a Nightingale results dataset 
+into the 10 plots that make up the figure. User dataset should include a column
+with either the UK Biobank or China Kadoorie Biobank variable name to enable 
+the data to be matched to the template using the "merge_template" function.
+
+```{r merge-data}
+myData <- merge_template(cetp, "ckb_id")
+
+```
+### One-step Figure
+The nightingale function wraps the formatData, multiPlotInput, bubbleHeatmapList 
+and nightingalePlot functions listed below, applying default settings to build 
+the standard figure in one step. Alternatively, see below for the individual 
+functions. 
+
+```{r one-step}
+metabTree <- nightingale(myData)
+
+```
+
+### Format Data
+The formatData function splits a dataset according to the value of plotGroup, 
+and reshapes each one into two matrices defined by the values of rowName and 
+colName, containing the values of colorValue and sizeValue, and orders the list 
+and the rows and columns of each matrix. The Nightingale sorting orders are 
+built-in and will override other settings when nightingale = TRUE. 
+
+```{r format-data}
+gridData <- formatData(myData, colorValue="estimate", sizeValue = "negLog10P", 
+                       nightingale = TRUE)
+```
+
+### Prepare Input for plotting function (multPlotInput) 
+multiPlotInput() returns a list of lists of the input arguments/settings for 
+bubbleHeatmap(), allowing multiple plots to be generated at once. It generates 
+a single set of legends based on the data across all plots. Settings 
+for the Nightingale plots are built-in and are requested using nightingale 
+= TRUE.
+
+```{r tree-input}
+treeInput <- multiPlotInput(colorList=gridData$colorList, 
+                            sizeList=gridData$sizeList, 
+                            nightingale=TRUE, legendHeight=8)
+```
+
+### BubbleHeatmapList
+bubbleHeatmapList is a convenient wrapper for generating a list of plots in a 
+single call. It requires a single argument of two lists, \$trees, a list of 
+argument lists to create plots using bubbleHeatmap(), and \$legends, a list of 
+arguments for (optionally) creating legends using bubbleHMLegends(). The output 
+from multiPlotInput is formatted in this way and can be passed directly to
+bubbleHeatmapList().
+
+```{r create-trees}
+treeList <- bubbleHeatmapList(treeInput)
+```
+
+### Nightingale Figure Function
+The Nightingale function takes a list of plot trees and a legend tree, and 
+combines and arranges them to produce a single tree representing the Nightingale
+plot figure style. Like the individual bubbleHeatmap trees, they can be edited,
+or drawn using grid.draw()
+
+```{r assemble-figure}
+metabTree <- nightingalePlot(treeList)
+```
+```{r plot2,  dev = "png", dev.args = list(type = "cairo-png"), fig.width = 8, fig.height=6, out.width="100%"}
+grid.newpage()
+grid.draw(metabTree)
+```
