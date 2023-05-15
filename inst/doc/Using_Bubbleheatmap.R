@@ -1,7 +1,8 @@
 ## ---- include = FALSE---------------------------------------------------------
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>",
+  bubbleLegends.device.warning = FALSE
 )
 
 ## ----setup--------------------------------------------------------------------
@@ -24,15 +25,13 @@ tree <-  bubbleHeatmap(colorMat, sizeMat, treeName = "example",
 #Draw plot
 grid.newpage()
 grid.draw(tree)
-showViewport()
 
 ## ----merge-data---------------------------------------------------------------
 myData <- merge_template(cetp, "ckb_id")
 
 
 ## ----one-step-----------------------------------------------------------------
-metabTree <- nightingale(myData)
-
+metabTree <- metabFigure(myData)
 
 ## ----format-data--------------------------------------------------------------
 gridData <- formatData(myData, colorValue="estimate", sizeValue = "negLog10P", 
@@ -47,7 +46,7 @@ treeInput <- multiPlotInput(colorList=gridData$colorList,
 treeList <- bubbleHeatmapList(treeInput)
 
 ## ----assemble-figure----------------------------------------------------------
-metabTree <- nightingalePlot(treeList)
+metabTree <- metabFigurePlot(treeList)
 
 ## ----plot2,  dev = "png", dev.args = list(type = "cairo-png"), fig.width = 8, fig.height=6, out.width="100%"----
 grid.newpage()

@@ -18,7 +18,7 @@
 #' Quick function to produce a final Nightingale figure from results data merged
 #' with one of the supplied template datasets. This function wraps the functions
 #' \code{\link{formatData}}, \code{\link{multiPlotInput}},
-#' \code{\link{bubbleHeatmapList}} and \code{\link{nightingalePlot}} applying
+#' \code{\link{bubbleHeatmapList}} and \code{\link{metabFigurePlot}} applying
 #' default settings.
 #'
 #' @return  Produces a complete metabolomics figure consisting of 14
@@ -29,21 +29,21 @@
 #'
 #' @examples
 #' myData <- merge_template(cetp, "ckb_id")
-#' metabTree <- nightingale(myData)
+#' metabTree <- metabFigure(myData)
 #' grid.draw(metabTree)
 #'
 #' @export
 
 
-nightingale <- function(data, colorValue="estimate", sizeValue = "negLog10P", legendHeight=8, context = gpar(cex = 0.8),
+metabFigure <- function(data, colorValue="estimate", sizeValue = "negLog10P", legendHeight=8, context = gpar(cex = 0.8),
                         unitBase = unit(0.5, "cm"), colorLim = c(NA, NA), sizeLim = c(NA, NA)){
   gData <- formatData(data, colorValue = colorValue, sizeValue = sizeValue)
   tInput <- multiPlotInput(colorList=gData$colorList, sizeList=gData$sizeList, colorLim = colorLim,
                            sizeLim = sizeLim, legendHeight=8, context=context, unitBase=unitBase)
   tList <- bubbleHeatmapList(tInput)
-  metabTree <- nightingalePlot(tList)}
+  metabTree <- metabFigurePlot(tList)}
 
-nightingale <- function(data,
+metabFigure <- function(data,
                         colorValue="estimate",
                         sizeValue = "negLog10P",
                         legendHeight=8,
@@ -56,7 +56,7 @@ nightingale <- function(data,
                            colorLim = colorLim, sizeLim = sizeLim,
                            legendHeight=8, context=context, unitBase=unitBase)
   tList <- bubbleHeatmapList(tInput)
-  metabTree <- nightingalePlot(tList)
+  metabTree <- metabFigurePlot(tList)
 }
 
 
@@ -75,7 +75,7 @@ nightingale <- function(data,
 #' bubblehHeatmaps arranged into a Nightingale metabolomics figure.
 #' @export
 
-nightingalePlot <- function(treeList) {
+metabFigurePlot <- function(treeList) {
 
   #Get unit size
   unitBase <- treeList[[1]]$children$GridSq$y[1] - treeList[[1]]$children$GridSq$y[2]

@@ -14,7 +14,9 @@ bubbleHMLegends(
   legendHeight,
   legendTitles,
   showBubbleLegend = TRUE,
-  showColorLegend = TRUE
+  showColorLegend = TRUE,
+  name = "Legends",
+  orientation = c("horizontal", "vertical")
 )
 }
 \arguments{
@@ -45,6 +47,12 @@ the size legend title, second for the color legend.}
 
 \item{showColorLegend, showBubbleLegend}{Should plot include legends for color
 scale/bubble size?}
+
+\item{name}{character string naming the gTree containing the function output.}
+
+\item{orientation}{one of "horizontal" or "vertical", (default horizontal)
+indicating whether legends should be arranged stacked or side by side.
+Ignored if only one legend is required.}
 }
 \value{
 A \code{\link[grid]{gTree}} object representing the bubbleHeatmap

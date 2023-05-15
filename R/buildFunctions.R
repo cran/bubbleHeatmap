@@ -262,7 +262,10 @@ bubbleHeatmapList <- function(inputList) {
 #' @family build functions
 #' @return A \code{\link[grid]{gTree}} object representing the bubbleHeatmap
 #' legends requested by the showBubbleLegend and showColorLegend parameters.
-#'
+#' @param orientation one of "horizontal" or "vertical", (default horizontal)
+#' indicating whether legends should be arranged stacked or side by side.
+#' Ignored if only one legend is required.
+#' @param name character string naming the gTree containing the function output.
 #' @examples
 #' legends <- bubbleHMLegends(
 #'   sizeBreaks = seq(0, 80, 10), colorBreaks = seq(-2, 2, 0.5), diameter = 0.8,
@@ -282,13 +285,42 @@ bubbleHMLegends <- function(sizeBreaks,
                             legendHeight,
                             legendTitles,
                             showBubbleLegend = TRUE,
-                            showColorLegend = TRUE) {
-  #### Set Limits####
+                            showColorLegend = TRUE,
+                            name = "Legends",
+                            orientation = c("horizontal", "vertical")) {
+  #### Print Device Warning ####
+  if(getOption("bubbleLegends.device.warning", TRUE)){
+    warning("\nbubbleHeatmap must be drawn on a graphics device with gradient
+            fill support (e.g. cairo_pdf or png(type = 'cairo')) in order to
+            render the color legend correctly.\n
+            This warning will be shown  once per session and may be disabled
+            by setting options('bubbleLegends.device.warning' = FALSE)",
+            call. = FALSE)
+    options('bubbleLegends.device.warning' = FALSE)}
+  orientation = match.arg(orientation)
+  #### Set Limits ####
   sizeLim <- c(sizeBreaks[1], tail(sizeBreaks, 1))
   colorLim <- c(colorBreaks[1], tail(colorBreaks, 1))
   #### Build grob tree####
   children <- gList()
   childrenvp <- vpList()
+  if(all(showBubbleLegend, showColorLegend)){
+    if(orientation == "horizontal"){
+      BL_pos <- c(2, 2)
+      CL_pos <- c(2, 4)
+      layout <- grid.layout(nrow = 3, ncol = 5)
+    }else if(orientation == "vertical"){
+      BL_pos <- c(2, 2)
+      CL_pos <- c(4, 2)
+      layout <- grid.layout(nrow = 5, ncol = 3)
+    }
+  }else if(showBubbleLegend){
+    BL_pos <- c(2, 2)
+    layout <- grid.layout(nrow = 3, ncol = 3)
+  }else if(showColorLegend){
+    CL_pos <- c(2, 2)
+    layout <- grid.layout(nrow = 3, ncol = 3)
+  }
   #### Build Bubble Legend####
   if (showBubbleLegend == TRUE) {
     start <- unit(0.5, "npc") - ((unitBase + unit(max(sapply(sizeBreaks, nchar)), "char")) / 2)
@@ -297,7 +329,7 @@ bubbleHMLegends <- function(sizeBreaks,
     children[["BubbleLegend"]] <-
       gTree(name = "BubbleLegend",
             cl = "bubbleLegend",
-            vp = vpPath("Legends", "BubbleLegend"),
+            vp = vpPath(name, "BubbleLegend"),
             children = gList(
               rectGrob(x = start,
                  y = c(0.5:(length(sizeBreaks) - 0.5)) * unitBase,
@@ -320,8 +352,8 @@ bubbleHMLegends <- function(sizeBreaks,
                        just = c("centre", "bottom"),
                        name = "BLTitle")))
     childrenvp[["BubbleLegend"]] <- viewport(name = "BubbleLegend",
-                                             layout.pos.row = 2,
-                                             layout.pos.col = 2)
+                                             layout.pos.row = BL_pos[1],
+                                             layout.pos.col = BL_pos[2])
   }
   #### Calculate positions of labels & color blocks####
   if (showColorLegend == TRUE) {
@@ -337,7 +369,7 @@ bubbleHMLegends <- function(sizeBreaks,
     children[["ColorLegend"]] <-
       gTree(name = "ColorLegend",
             cl = "colorLegend",
-            vp = vpPath("Legends", "ColorLegend"),
+            vp = vpPath(name, "ColorLegend"),
             children = gList(
               rectGrob(x = start,
                        y = 0,
@@ -364,33 +396,41 @@ bubbleHMLegends <- function(sizeBreaks,
                                           "CLOutline",
                                           gp = gpar(fill = linearGradient(colours = colorSeq)))
     childrenvp[["ColorLegend"]] <- viewport(name = "ColorLegend",
-                                            layout.pos.row = 2,
-                                            layout.pos.col = 4)
+                                            layout.pos.row = CL_pos[1],
+                                            layout.pos.col = CL_pos[2])
   }
 
 
   #### Set layout sizes function####
-  tree <- gTree(name = "Legends",
+  tree <- gTree(name = name,
                 children = children,
                 childrenvp = vpTree(
-                  viewport(layout = grid.layout(nrow = 3, ncol = 5),
-                  name = "Legends", gp = context), children = childrenvp))
+                  viewport(layout = layout,
+                  name = name, gp = context), children = childrenvp))
   convertUnit(grobWidth(tree), "cm")
-  widths <- convertUnit(unit.c(grobWidth(tree$children$BubbleLegend),
-                               grobWidth(tree$children$ColorLegend)), "cm")
-  heights <- convertUnit(unit.c(grobHeight(tree$children$BubbleLegend),
-                                grobHeight(tree$children$ColorLegend)), "cm")
+  if(layout$ncol == 3){
+    tree$childrenvp$parent$layout$widths <- unit(c(1.5, 1, 1.5), "null")
+  }else{
+    tree$childrenvp$parent$layout$widths <- unit(c(1.5, 1, 1, 1, 1.5), "null")}
+  if(layout$nrow == 3){
+    tree$childrenvp$parent$layout$heights <- unit(c(1.5, 1, 1.5), "null")
+  }else{
+    tree$childrenvp$parent$layout$heights <- unit(c(1.5, 1, 1, 1, 1.5), "null")}
+  if(showBubbleLegend == TRUE){
+    tree$childrenvp$parent$layout$heights[BL_pos[1]] <-
+      convertUnit(grobHeight(tree$children$BubbleLegend), "cm")
+    tree$childrenvp$parent$layout$widths[BL_pos[2]] <-
+      convertUnit(grobWidth(tree$children$BubbleLegend), "cm")}
+  if(showColorLegend == TRUE){
+    tree$childrenvp$parent$layout$heights[CL_pos[1]] <-
+      convertUnit(grobHeight(tree$children$ColorLegend), "cm")
+    tree$childrenvp$parent$layout$widths[CL_pos[2]] <-
+      convertUnit(grobWidth(tree$children$ColorLegend), "cm")}
   dev.off()
-  tree$childrenvp$parent$layout$widths <- unit.c(unit(1.5, "null"),
-                                                 widths[1],
-                                                 unit(1, "null"),
-                                                 widths[2],
-                                                 unit(1.5, "null"))
-  tree$childrenvp$parent$layout$heights <- unit.c(unit(1, "null"),
-                                                  max(heights),
-                                                  unit(1, "null"))
-  tree$childrenvp$parent$width <- sum(widths) + 1.5 * unitBase
-  tree$childrenvp$parent$height <- sum(heights) + 1.5 * unitBase
+  tree$childrenvp$parent$width <-
+    sum(tree$childrenvp$parent$layout$widths) + 1.5 * unitBase
+  tree$childrenvp$parent$height <-
+    sum(tree$childrenvp$parent$layout$heights) + 1.5 * unitBase
   return(tree)
 }
 
